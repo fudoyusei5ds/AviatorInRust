@@ -345,7 +345,7 @@ fn main() {
 
         void main() {
             v_color = object_color;
-            v_normal = normal;
+            v_normal = mat3(transpose(inverse(model))) * normal;
 
             gl_Position = perspective*view*model*vec4(position, 1.0);
         }

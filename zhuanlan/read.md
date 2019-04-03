@@ -1,10 +1,10 @@
-# 用Rust写一个飞行员游戏
+# 用Rust写一个飞行员游戏-01
 
-学习glium也有一个多月了, 于是写了个小游戏练手, 基本思路是借(chao)鉴(xi)了这篇文章: **[使用 Three.js 的 3D 制作动画场景：飞行者](https://zhuanlan.zhihu.com/p/21341483).**
+学习glium也有一个多月了, 于是写了个demo练手, 基本思路是借(chao)鉴(xi)了这篇文章: **[使用 Three.js 的 3D 制作动画场景：飞行者](https://zhuanlan.zhihu.com/p/21341483).**
 
-### 一个立方体
+### 01. 立方体
 
-首先我们要创建1个正方体, 用来组成飞机以及云.  
+首先我们要创建1个立方体结构, 用来组成飞机以及云.  
 
 不过glium并没有自动创建立方体的功能, 我们要自己写一个.  
 
@@ -34,9 +34,10 @@ pub struct Cube {
 
 ```
 impl Cube {
-    // 这个函数用来新建一个立方体对象
+    // 这个方法用来返回一个默认的立方体对象
     pub fn new(display: &glium::Display) -> Cube {
         let shape = vec![
+            // 一共六个面, 每个面上4个顶点
             // 前
             Position {position: [-0.5, 0.5, -0.5]},  // 0
             Position {position: [0.5, 0.5, -0.5]},   // 1
@@ -76,11 +77,12 @@ impl Cube {
         }
     }
 
-    // 绘制函数
+    // 这个方法将立方体绘制到帧缓冲中
     pub fn draw(&self,
         target: &mut glium::Frame, 
         program: &glium::Program,)
     {
+        // 设置uniform变量
         let uniform = uniform! {
             object_color: self.color
         };
@@ -89,7 +91,7 @@ impl Cube {
                     &self.index_buffer,
                     program, 
                     uniforms,
-                    
+                    &Default::default()
         ).unwrap();
     }
 }
@@ -98,7 +100,7 @@ impl Cube {
 这样, 立方体结构体就有了一个 *new* 方法, 用于返回一个新建的立方体对象: 它是一个红色的立方体, 边长为1, 且位于屏幕正中央.  
 以及一个 *draw* 方法, 在帧缓冲中绘制立方体.  
 
-还需要创建一个顶点着色器和片段着色器, 链接编译一个着色器程序:  
+还需要创建一个顶点着色器和片段着色器, 用来链接编译一个着色器程序:  
 
 ```
 // 着色器代码
@@ -142,19 +144,23 @@ let program = glium::Program::from_source(&display, vs_str, fs_str, None).unwrap
 
 glium指南里的透视代码直接扒下来就能用了. 具体请参考 **[这里](https://github.com/glium/glium/blob/master/book/tuto-10-perspective.md).**  
 
+顺便把glium指南里的 *观察* 矩阵的代码也扒下来, 然后调整好观察的角度:  
+
 以下为添加了透视后的结果:  
 
 ![新的立方体](01-newcube.png)
 
-### 添加光照 
+**[本部分源码]()**
+
+### 02. 光照 
 
 因为立方体各个面的颜色都是一样的, 所以上面显示的结果看上去就像一个六边形.  
 
 一切都是因为没有光照.  
 
-为了添加光照, 首先要为立方体的每个顶点添加法线. 有关法线和光照之间的关系, glium指南的 **[这一节](https://github.com/glium/glium/blob/master/book/tuto-08-gouraud.md)** 有着详细的介绍.  
+为了添加光照, 首先要为立方体的每个顶点添加法线. 如何使用法线计算光照, glium指南的 **[tuto-08-gouraud](https://github.com/glium/glium/blob/master/book/tuto-08-gouraud.md)** 一节有着详细的介绍.  
 
-首先, 在代码中添加一个法线的结构体:  
+首先, 和顶点类似, 先在代码中添加一个法线的结构体:  
 
 ```
 // 法线向量
@@ -222,7 +228,7 @@ out vec3 v_normal;
 
 void main() {
     v_color = object_color;
-    v_normal = mat3(transpose(inverse(model))) * normal;
+    v_normal = normal;
 
     gl_Position = perspective*view*vec4(position, 1.0);
 }
@@ -257,7 +263,9 @@ void main() {
 }
 ```
 
-结果如下显示:  
+有多种不同类型的光照, 在这里只使用环境光和漫反射光
+
+添加光照之后的结果如下显示:  
 
 ![添加光照之后](02-cube.png)
 
@@ -289,8 +297,10 @@ target.draw(
 ![修正深度之后](02-newcube.png)
 
 看上去好多了.  
+
+**[本部分源码]()**
  
-### 组合立方体
+### 03. 立方体组合
 
 有了一个基本的立方体之后, 就能用它来组成各种复杂的图形. 在原文中, 飞机和云朵都是由数个立方体组合成的.  
 
@@ -300,7 +310,7 @@ target.draw(
 
 这里使用矩阵对立方体的各个属性进行修改. 有关矩阵变换的内容, 可以参考 **[这里](https://learnopengl-cn.github.io/01%20Getting%20started/07%20Transformations/#_13).**
 
-为立方体添加 *位置* *旋转* *尺寸* 三个矩阵:  
+首先, 为立方体添加 *位置* *旋转* *尺寸* 三个矩阵:  
 
 ```
 pub struct Cube {
@@ -363,7 +373,7 @@ pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
 }
 ```
 
-同时在 *new* 方法里也要添加对应的初始化语句:  
+同时在 *new* 方法里也要添加对应的初始化语句, 在默认的情况下 将这些矩阵都初始化为单位矩阵:  
 
 ```
 ...
@@ -411,7 +421,7 @@ fn matrix_multi(first: &[[f32; 4]; 4], second: &[[f32; 4]; 4]) -> [[f32; 4]; 4] 
 }
 ```
 
-然后在绘制的时候计算结果:  
+然后在绘制的时候先计算结果:  
 
 ```
 ...
@@ -532,9 +542,15 @@ pub fn new(display: &glium::Display) -> Plane {
 }
 ```
 
-*飞机* 结构体同样拥有 *位置* *旋转角度* *尺寸* 这三种属性, 当对 *飞机* 进行变换时, 同时也是对其内部部件进行变换.  
+这样, 就在坐标原点绘制好了一架蠢蠢的飞机, 不过如果想要移动或者旋转飞机的时候, 就需要对飞机内每个部件都进行同样的操作.  
 
-因此需要在立方体结构体中添加一个矩阵, 用来表示 *飞机* 的变换.  
+可以把飞机内部视为一个坐标系, 飞机内部件的变换都是在这个坐标系内进行的. 如果想要对飞机进行变换, 例如, 缩放, 移动, 旋转, 只需要对这个坐标系进行操作就可以了.  
+
+这样在绘制时, 首先对飞机内部的坐标系进行相对世界坐标的变换, 然后再对飞机内部的部件进行相对于内部坐标系的变换.  
+
+因此需要在立方体结构体中添加一个矩阵 *pmodel*, 用来表示 *父坐标系* 的变换.
+
+对于普通的立方体, *pmodel* 表示世界坐标系的变换, 对于飞机内部的立方体, 其表示飞机的变换.  
 
 ```
 pub struct Cube {
@@ -553,6 +569,7 @@ pub struct Cube {
 
 ```
 ...
+// 首先进行父坐标系的变换, 再进行自身的变换
 let model: [[f32; 4]; 4] = 
     matrix_multi(&self.scale, &matrix_multi(&self.rotate, &matrix_multi(&self.position, &self.pmodel)));
 ...
@@ -567,8 +584,10 @@ pub fn draw(&mut self,
     view: &[[f32; 4]; 4],
     perspective: &[[f32; 4]; 4],) 
 {
+    // 通过自身的矩阵计算出内部坐标系变换的model矩阵
     let model: [[f32; 4]; 4] = 
         matrix_multi(&self.scale, &matrix_multi(&self.rotate, &self.position));
+    // 将model矩阵传递给每个部件
     self.wing.set_pmodel(&model); 
     self.wing.draw(target, program, view, perspective);
     self.cockpit.set_pmodel(&model);
@@ -588,13 +607,161 @@ pub fn draw(&mut self,
 
 ![结果](03-plane.png)
 
-### 写一个圆柱体
+**[本部分源码]()**
+
+### 04. 圆柱体
 
 写一个圆柱体的步骤和立方体类似. 只不过圆柱体的顶点数比较多, 因此其顶点的计算和顶点的绘制顺序更加复杂.  
 
-这里不多介绍.  
+首先, 列举出圆柱体的全部顶点:  
+
+```
+...
+let mut vertex: Vec<Position> = Vec::new();
+for i in 0..40 {
+    let angle: f32 = std::f32::consts::PI / 20.0 * i as f32;
+    for z in -5..6 {
+        let x: f32 = angle.cos();
+        let y: f32 = angle.sin();
+        vertex.push(Position {position: [x, y, 0.1 * z as f32]});
+    }
+}
+...
+```
+
+按照原文, 将圆柱体的半径分段40, 高分段10, 一共有440个顶点.  
+
+然后, 按照每三个相邻顶点组成1个三角形的规律, 创建顶点缓冲:  
+
+```
+let mut shape: Vec<Position> = Vec::new();
+for i in 0..40 {
+    for index in 0..10 {
+        let first = index + i*11;
+        if i==39 {
+            // 正面
+            shape.push(vertex[index+1]);
+            shape.push(vertex[first+1]);
+            shape.push(vertex[first]);
+            // 反面
+            shape.push(vertex[first]);
+            shape.push(vertex[index]);
+            shape.push(vertex[index+1]);
+        }
+        else {
+            // 正面
+            shape.push(vertex[first+12]);
+            shape.push(vertex[first+1]);
+            shape.push(vertex[first]);
+            // 反面
+            shape.push(vertex[first]);
+            shape.push(vertex[first+11]);
+            shape.push(vertex[first+12]);
+        }
+    }
+}
+```
+
+然后计算出每个三角形中, 三个顶点的法线向量:  
+
+```
+let mut normals: Vec<Normal> = Vec::new();
+// 一共600个三角形
+for i in 0..800 {
+    // 每个三角形3个顶点
+    let a:[f32; 3] = [shape[i*3+1].position[0]-shape[i*3].position[0], shape[i*3+1].position[1]-shape[i*3].position[1], shape[i*3+1].position[2]-shape[i*3].position[2]];
+    let b:[f32; 3] = [shape[i*3+2].position[0]-shape[i*3+1].position[0], shape[i*3+2].position[1]-shape[i*3+1].position[1], shape[i*3+2].position[2]-shape[i*3+1].position[2]];
+    // 求个叉乘
+    let normal:[f32; 3] = [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+    for _j in 0..3 {
+        normals.push(Normal {normal});
+    }
+}
+```
+
+之后的绘制操作, 变换操作都和立方体结构体一致, 这里不再赘述.  
 
 结果如下:  
 
 ![圆柱体](04-sea.png)
 
+另外, 原文中还实现了海浪波动的效果, 这里也给加上.  
+
+实现方法和原文中一致.  
+
+在创建顶点的同时, 为每个顶点保存一个随机的旋转半径, 旋转角度和旋转速度
+
+```
+...
+let mut vertex: Vec<Position> = Vec::new();
+let mut index = 0;
+let mut waves:[[f32; 3]; 440]=[[0.0; 3]; 440];
+for i in 0..40 {
+    let angle: f32 = std::f32::consts::PI / 20.0 * i as f32;
+    for z in -5..6 {
+        let x: f32 = angle.cos();
+        let y: f32 = angle.sin();
+        vertex.push(Position {position: [x, y, 0.1 * z as f32]});
+        waves[index] = [
+            rand::random::<f32>() * std::f32::consts::PI * 2.0,     // 随机角度
+            0.01 + rand::random::<f32>() * 0.03,                    // 随机距离
+            0.016 +  rand::random::<f32>() * 0.032                  // 转动角度
+        ];
+        index+=1;
+    }
+}
+...
+```
+
+然后在每次绘制时, 重新计算每个顶点的位置:  
+
+```
+let mut new_vertex: Vec<Position> = Vec::new();
+for index in 0..440 {
+    let x: f32 = self.vertex[index].position[0];
+    let x: f32 = x + self.waves[index][0].cos() * self.waves[index][1];
+    let y: f32 = self.vertex[index].position[1];
+    let y: f32 = y + self.waves[index][0].sin() * self.waves[index][1];
+    let z: f32 = self.vertex[index].position[2];
+    new_vertex.push(Position{position:[x, y, z]}); // 每次绘制时, 顶点的位置都不同
+    self.waves[index][0] += self.waves[index][2];
+}
+```
+
+之后, 需要重新生成顶点和法线的顶点缓冲.  
+
+![海浪](04-wave.png)
+
+最后还有一点, 如果你发现你像我一样, 发现设置的颜色和最终在屏幕上显示的颜色不一致. 那么是glium的锅.  
+
+glium默认开启Gamma校正(有关Gamma校正的内容, 可以参考 **[这篇回答](https://www.zhihu.com/question/27467127/answer/37555901)**), 总之就是glium会把颜色做一个(1/2.2)的幂运算.  
+
+要关闭Gamma校正, 需要修改创建着色器程序的代码.
+
+之前我们是这样创建的:  
+
+```
+let program = glium::Program::from_source(&display, vs_str, fs_str, None).unwrap();
+```
+
+现在我们用 *new* 方法:  
+
+```
+let sourcecode = glium::program::ProgramCreationInput::SourceCode {
+    vertex_shader: vs_str,
+    tessellation_control_shader: None,  // 没用到的属性直接设为None
+    tessellation_evaluation_shader: None,
+    geometry_shader: None,
+    fragment_shader: fs_str,
+    transform_feedback_varyings: None,
+    outputs_srgb: true,     // 这个属性默认是false, 即开启Gamma校正, 我们将其设为true
+    uses_point_size: true,
+};
+let program = glium::Program::new(&display, sourcecode).unwrap();
+```
+
+现在颜色正常了:  
+
+![结果](04-finally.png)
+
+**[本部分源码]()**

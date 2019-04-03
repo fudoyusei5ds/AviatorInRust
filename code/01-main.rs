@@ -125,12 +125,13 @@ fn main() {
 
     let mut closed = false;
     while !closed {
-        // 创建frame
+        // 创建帧缓冲
         let mut target= display.draw();
         // 清理背景颜色
         target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
-        // 添加透视
+        // 添加观察矩阵
         let view = view_matrix(&[1.0, 1.0, -1.0], &[-1.0, -1.0, 1.0], &[1.0, 0.0, 0.0]);
+        // 添加透视矩阵
         let perspective = {
             let (width, height) = target.get_dimensions();
             let aspect_ratio = height as f32 / width as f32;

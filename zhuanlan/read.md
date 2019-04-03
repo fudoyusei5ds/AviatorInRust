@@ -150,7 +150,7 @@ glium指南里的透视代码直接扒下来就能用了. 具体请参考 **[这
 
 ![新的立方体](01-newcube.png)
 
-**[本部分源码]()**
+**[本部分源码](https://github.com/fudoyusei5ds/AviatorInRust/blob/master/code/01-main.rs)**
 
 ### 02. 光照 
 
@@ -298,7 +298,7 @@ target.draw(
 
 看上去好多了.  
 
-**[本部分源码]()**
+**[本部分源码](https://github.com/fudoyusei5ds/AviatorInRust/blob/master/code/02-main.rs)**
  
 ### 03. 立方体组合
 
@@ -607,7 +607,7 @@ pub fn draw(&mut self,
 
 ![结果](03-plane.png)
 
-**[本部分源码]()**
+**[本部分源码](https://github.com/fudoyusei5ds/AviatorInRust/blob/master/code/03-main.rs)**
 
 ### 04. 圆柱体
 
@@ -764,4 +764,4 @@ let program = glium::Program::new(&display, sourcecode).unwrap();
 
 ![结果](04-finally.png)
 
-**[本部分源码]()**
+**[本部分源码](https://github.com/fudoyusei5ds/AviatorInRust/blob/master/code/04-main.rs)**

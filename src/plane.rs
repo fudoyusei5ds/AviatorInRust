@@ -62,29 +62,29 @@ impl Plane {
     }
 
     // 绘制函数
-    pub fn draw<S>(&mut self, 
+    pub fn draw<S, U>(&mut self, 
         target: &mut S, 
         program: &glium::Program,
-        view: &[[f32; 4]; 4],
-        perspective: &[[f32; 4]; 4],)
+        uniform: &&U)
     where
         S: glium::Surface, 
+        U: glium::uniforms::AsUniformValue,
     {
         let model: [[f32; 4]; 4] = 
             geom::matrix_multi(&self.scale, 
                 &geom::matrix_multi(&self.rotate, &self.position));
         self.wing.set_pmodel(&model); 
-        self.wing.draw(target, program, view, perspective);
+        self.wing.draw(target, program, *uniform);
         self.cockpit.set_pmodel(&model);
-        self.cockpit.draw(target, program, view, perspective);
+        self.cockpit.draw(target, program, *uniform);
         self.engine.set_pmodel(&model);
-        self.engine.draw(target, program, view, perspective);
+        self.engine.draw(target, program, *uniform);
         self.tail.set_pmodel(&model);
-        self.tail.draw(target, program, view, perspective);
+        self.tail.draw(target, program, *uniform);
         self.propeller.set_pmodel(&model);
-        self.propeller.draw(target, program, view, perspective);
+        self.propeller.draw(target, program, *uniform);
         self.matblade.set_pmodel(&model);
-        self.matblade.draw(target, program, view, perspective);
+        self.matblade.draw(target, program, *uniform);
     }
 
     // 设置位置

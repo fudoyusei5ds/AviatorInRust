@@ -1,4 +1,4 @@
-pub const fs_str: &str = r#"
+pub const FS_STR: &str = r#"
 #version 330
 in vec3 v_color;
 in vec3 v_normal;

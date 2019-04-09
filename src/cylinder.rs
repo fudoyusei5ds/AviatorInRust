@@ -111,13 +111,13 @@ impl Cylinder {
     }
 
     // 绘制函数
-    pub fn draw<S>(&self,
+    pub fn draw<S, U>(&self,
         target: &mut S, 
         program: &glium::Program, 
-        view: &[[f32; 4]; 4],
-        perspective: &[[f32; 4]; 4])
+        uniform: U)
     where
         S: glium::Surface, 
+        U: glium::uniforms::AsUniformValue
     {
         // 开启深度测试
         let params = glium::DrawParameters {
@@ -135,8 +135,7 @@ impl Cylinder {
         
         let uniforms = uniform! {
             object_color: self.color, 
-            view: *view,
-            perspective: *perspective,
+            MyBlock: uniform,
             model: model,
         };
         

@@ -68,7 +68,7 @@ impl Screen {
             &self.program, 
             &uniform!{
                 screen_texture: 
-                    texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest)}, 
+                    texture}, 
             &Default::default()).unwrap();
     }
 }

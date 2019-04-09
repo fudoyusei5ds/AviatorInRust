@@ -90,13 +90,13 @@ impl Cube {
     }
 
     // 绘制函数
-    pub fn draw<S>(&self,
+    pub fn draw<S, U>(&self,
         target: &mut S, 
         program: &glium::Program,
-        view: &[[f32; 4]; 4],
-        perspective: &[[f32; 4]; 4],)
+        uniform: U)
     where
         S: glium::Surface,
+        U: glium::uniforms::AsUniformValue,
     {
         let model: [[f32; 4]; 4] = 
             geom::matrix_multi(&self.scale, 
@@ -104,8 +104,7 @@ impl Cube {
                     &geom::matrix_multi(&self.position, &self.pmodel)));
         let uniforms = uniform! {
             object_color: self.color, 
-            view: *view,
-            perspective: *perspective,
+            MyBlock: uniform,
             model: model,
         };
         // 创建绘制参数

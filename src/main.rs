@@ -10,12 +10,22 @@ mod screen;
 mod shade_fs;
 mod shade_vs;
 
+#[derive(Copy, Clone)]
+struct Block {
+    view: [[f32; 4]; 4],
+    perspective: [[f32; 4]; 4]
+}
+implement_uniform_block! (Block, view, perspective);
+
 fn main() {
     // 创建事件循环
     let mut events_loop = glium::glutin::EventsLoop::new();
+
     // 创建窗口
+    let monitor = glium::glutin::Window::new(&events_loop).unwrap();
     let window = glium::glutin::WindowBuilder::new()
-                    .with_dimensions(glium::glutin::dpi::LogicalSize::new(800.0, 600.0))
+                    .with_dimensions(glium::glutin::dpi::PhysicalSize::new(800.0, 600.0)
+                        .to_logical(monitor.get_hidpi_factor()))
                     .with_title("aviator");
     // 创建上下文
     let context = glium::glutin::ContextBuilder::new()
@@ -27,11 +37,11 @@ fn main() {
 
     // 创建着色器程序
     let sourcecode = glium::program::ProgramCreationInput::SourceCode {
-        vertex_shader: shade_vs::vs_str,
+        vertex_shader: shade_vs::VS_STR,
         tessellation_control_shader: None,
         tessellation_evaluation_shader: None,
         geometry_shader: None,
-        fragment_shader: shade_fs::fs_str,
+        fragment_shader: shade_fs::FS_STR,
         transform_feedback_varyings: None,
         outputs_srgb: true,
         uses_point_size: true,
@@ -48,8 +58,10 @@ fn main() {
     // 创建镜头
     let view_camera = camera::Camera::new(&[0.0, 1.0, -2.0], &[0.0, -1.0, 2.0]);
 
-    // 创建屏幕
-    let initscreen = screen::Screen::new(&display);
+    // 创建阴影的视角
+    let shadow_camera = camera::Camera::new(&[2.0, 2.0, 0.0], &[-2.0, -2.0, 0.0]);
+    // 创建阴影的着色器程序
+    // let program = glium::Program::from_source(&display, vertex_shader: &'a str, fragment_shader: &'a str, None);
 
     let mut closed = false;
     while !closed {
@@ -58,6 +70,18 @@ fn main() {
         // 清理背景颜色
         target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
 
+        // 创建帧缓冲用来保存阴影
+        let shadow_depth_texture = 
+            glium::texture::depth_texture2d::DepthTexture2d::empty(&display, 1024, 1024).unwrap();
+        let shadow_color_texture = 
+            glium::texture::texture2d::Texture2d::empty(&display, 1024, 1024).unwrap();
+
+        // 创建一个只有深度缓冲的帧缓冲
+        // let mut shadow_buffer = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, &shadow_color_texture, &shadow_depth_texture).unwrap();
+        // shadow_buffer.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+        // 在深度贴图中渲染场景
+        // airplane.draw(&mut shadow_buffer, &shadow_program)
+
         // 创建帧缓冲
         let color_texture = glium::texture::srgb_texture2d_multisample::SrgbTexture2dMultisample::empty(&display, 800, 600, 4).unwrap();
         let depth_texture = glium::texture::depth_texture2d_multisample::DepthTexture2dMultisample::empty(&display, 800, 600, 4).unwrap();
@@ -65,13 +89,24 @@ fn main() {
         let mut frame_buffer = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, &color_texture, &depth_texture).unwrap();
         frame_buffer.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
-        // 绘制场景到新建帧缓冲
-        airplane.draw(&mut frame_buffer, &program, &view_camera.view, &view_camera.perspective);
-        sea.wave(&display);
-        sea.draw(&mut frame_buffer, &program, &view_camera.view, &view_camera.perspective);
+        // 创建一个uniform缓冲
+        let uniform_block = glium::uniforms::UniformBuffer::new(
+            &display, Block {
+                view: view_camera.view,
+                perspective: view_camera.perspective,
+            }).unwrap();
 
-        // 把纹理绘制到屏幕上
-        initscreen.draw(&mut target, &color_texture);
+        // 绘制场景到新建帧缓冲
+        airplane.draw(&mut frame_buffer, &program, &&&uniform_block);
+        sea.wave(&display);
+        sea.draw(&mut frame_buffer, &program, &uniform_block);
+
+        // 将帧缓冲的内容绘制到默认帧缓冲中
+        target.blit_from_simple_framebuffer(
+            &frame_buffer, 
+            &glium::Rect{left:0, bottom: 0, width: 800, height: 600}, 
+            &glium::BlitTarget{left:0, bottom: 0, width: 800, height: 600}, 
+            glium::uniforms::MagnifySamplerFilter::Nearest);
 
         // 将帧缓冲绘制到屏幕上
         target.finish().unwrap();

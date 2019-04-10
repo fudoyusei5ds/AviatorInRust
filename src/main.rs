@@ -102,8 +102,8 @@ fn main() {
                 view: shadow_camera.view,
                 perspective: shadow_camera.perspective,
             }).unwrap();
-        // airplane.draw(&mut shadow_buffer, &shadow_program, &shadow_uniform_block, &glium::texture::depth_texture2d::DepthTexture2d::empty(&display, 1024, 1024).unwrap());
-        // sea.draw(&mut shadow_buffer, &shadow_program, &shadow_uniform_block, &glium::texture::depth_texture2d::DepthTexture2d::empty(&display, 1024, 1024).unwrap());
+        airplane.draw(&mut shadow_buffer, &shadow_program, &shadow_uniform_block, &glium::texture::depth_texture2d::DepthTexture2d::empty(&display, 1024, 1024).unwrap());
+        sea.draw(&mut shadow_buffer, &shadow_program, &shadow_uniform_block, &glium::texture::depth_texture2d::DepthTexture2d::empty(&display, 1024, 1024).unwrap());
 
         // 创建帧缓冲
         let color_texture = glium::texture::srgb_texture2d_multisample::SrgbTexture2dMultisample::empty(&display, 800, 600, 4).unwrap();

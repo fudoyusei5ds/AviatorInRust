@@ -90,13 +90,14 @@ impl Cube {
     }
 
     // 绘制函数
-    pub fn draw<S, U>(&self,
+    pub fn draw<S, T>(&self,
         target: &mut S, 
         program: &glium::Program,
-        uniform: U)
+        uniform: &glium::uniforms::UniformBuffer<T>,
+        depth: &glium::texture::depth_texture2d::DepthTexture2d)
     where
         S: glium::Surface,
-        U: glium::uniforms::AsUniformValue,
+        T: glium::uniforms::UniformBlock+glium::buffer::Content,
     {
         let model: [[f32; 4]; 4] = 
             geom::matrix_multi(&self.scale, 
@@ -106,6 +107,7 @@ impl Cube {
             object_color: self.color, 
             MyBlock: uniform,
             model: model,
+            shadowMap: depth,
         };
         // 创建绘制参数
         let mut params: glium::draw_parameters::DrawParameters = Default::default();

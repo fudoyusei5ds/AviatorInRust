@@ -111,13 +111,14 @@ impl Cylinder {
     }
 
     // 绘制函数
-    pub fn draw<S, U>(&self,
+    pub fn draw<S, T>(&self,
         target: &mut S, 
         program: &glium::Program, 
-        uniform: U)
+        uniform: &glium::uniforms::UniformBuffer<T>,
+        depth: &glium::texture::depth_texture2d::DepthTexture2d)
     where
         S: glium::Surface, 
-        U: glium::uniforms::AsUniformValue
+        T: glium::uniforms::UniformBlock+glium::buffer::Content,
     {
         // 开启深度测试
         let params = glium::DrawParameters {
@@ -137,6 +138,7 @@ impl Cylinder {
             object_color: self.color, 
             MyBlock: uniform,
             model: model,
+            shadowMap: depth,
         };
         
         target.draw(

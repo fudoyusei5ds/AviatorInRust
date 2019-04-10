@@ -62,29 +62,30 @@ impl Plane {
     }
 
     // 绘制函数
-    pub fn draw<S, U>(&mut self, 
+    pub fn draw<S, T>(&mut self, 
         target: &mut S, 
         program: &glium::Program,
-        uniform: &&U)
+        uniform: &glium::uniforms::UniformBuffer<T>,
+        depth: &glium::texture::depth_texture2d::DepthTexture2d)
     where
         S: glium::Surface, 
-        U: glium::uniforms::AsUniformValue,
+        T: glium::uniforms::UniformBlock+glium::buffer::Content,
     {
         let model: [[f32; 4]; 4] = 
             geom::matrix_multi(&self.scale, 
                 &geom::matrix_multi(&self.rotate, &self.position));
         self.wing.set_pmodel(&model); 
-        self.wing.draw(target, program, *uniform);
+        self.wing.draw(target, program, uniform, depth);
         self.cockpit.set_pmodel(&model);
-        self.cockpit.draw(target, program, *uniform);
+        self.cockpit.draw(target, program, uniform, depth);
         self.engine.set_pmodel(&model);
-        self.engine.draw(target, program, *uniform);
+        self.engine.draw(target, program, uniform, depth);
         self.tail.set_pmodel(&model);
-        self.tail.draw(target, program, *uniform);
+        self.tail.draw(target, program, uniform,depth);
         self.propeller.set_pmodel(&model);
-        self.propeller.draw(target, program, *uniform);
+        self.propeller.draw(target, program, uniform,depth);
         self.matblade.set_pmodel(&model);
-        self.matblade.draw(target, program, *uniform);
+        self.matblade.draw(target, program, uniform,depth);
     }
 
     // 设置位置

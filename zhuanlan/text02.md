@@ -122,8 +122,65 @@ let context = glium::glutin::ContextBuilder::new()
 
 ![抗锯齿](12-msaa.png)
 
-如果使用的是自建的帧缓冲, 
+在ubuntu下, 上面这句代码可能会报错, 这是glium的一个bug, 具体可以参考 **[这里](https://github.com/glium/glium/issues/1677)**.  
+
+如果用的是新建的帧缓冲, 那么在为帧缓冲绑定附件的时候, 需要将深度缓冲和颜色缓冲的纹理类型从普通纹理替换成多重采样纹理:  
+
+```
+let color_texture = glium::texture::srgb_texture2d_multisample::SrgbTexture2dMultisample::empty(&display, 800, 600, 4).unwrap();
+let depth_texture = glium::texture::depth_texture2d_multisample::DepthTexture2dMultisample::empty(&display, 800, 600, 4).unwrap();
+```
+
+之后就和前一节类似, 不过, 因为多重采样的图像比普通图像包含更多信息, 因此需要还原图像, 而不是将图像直接贴到屏幕上. 通过 *blit_color* 这类函数可以将一个帧缓冲中的某个区域复制到另一个帧缓冲中，并且将多重采样缓冲还原.   
+
+```
+// 将新建的帧缓冲中的内容复制到默认的帧缓冲中
+target.blit_from_simple_framebuffer(
+    &frame_buffer, 
+    &glium::Rect{left:0, bottom: 0, width: 800, height: 600},   // 指定源缓冲区的图像大小
+    &glium::BlitTarget{left:0, bottom: 0, width: 800, height: 600}, // 指定目标缓冲区的图像大小
+    glium::uniforms::MagnifySamplerFilter::Nearest);
+```
+
+结果如下:  
+
+![离屏MSAA](12-fmmsaa.png)
+
+可以看到, 图像只占了窗口的一部分, 而窗口大小和绘制的图像大小都应该是800px*600px才对.  
+
+这是因为窗口在创建时所使用的像素是 *逻辑像素* :  
+
+```
+// with_dimensions 函数的声明
+pub fn with_dimensions(self, size: LogicalSize) -> WindowBuilder
+```
+
+而显卡在绘制图像时使用的是 *物理像素(或者设备像素)*.  
+
+有关二者的区别, 可以参考 **[这里]()**. 简单来说, 物理像素就是真实的像素, 而不同显示器上的1个像素的大小是不一样的. 比如同样100px * 100px大小的图形, 在手机上会显得很大, 占了屏幕的很大一部分, 而在4K显示器上会显得很小. 逻辑像素则不一样, 100 * 100 逻辑像素的图形, 在不同的显示器上看上去是一样大的.  
+
+逻辑像素和物理像素的比值跟显示器有关.  
+
+因此, 需要在窗口创建时使用物理像素:  
+
+```
+// 首先创建另一个窗口, 用来获取显示器的逻辑像素和物理像素的比值
+let monitor = glium::glutin::Window::new(&events_loop).unwrap();
+let window = glium::glutin::WindowBuilder::new()
+    .with_dimensions(
+        glium::glutin::dpi::PhysicalSize::new(800.0, 600.0) // 创建物理像素
+        .to_logical(monitor.get_hidpi_factor()))            // 然后转化为逻辑像素, 传递给绘制图形的窗口
+    .with_title("aviator");
+```
+
+结果如下:  
+
+![修改之后](12-fix.png)
 
 ### 03. 阴影
+
+接下来, 在场景中添加阴影.  
+
+
 
 ### 04. 雾

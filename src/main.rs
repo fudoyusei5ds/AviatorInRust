@@ -17,6 +17,15 @@ struct Block {
 }
 implement_uniform_block! (Block, view, perspective);
 
+#[derive(Copy, Clone)]
+struct ShadowBlock {
+    view: [[f32; 4]; 4],
+    perspective: [[f32; 4]; 4],
+    lightView: [[f32; 4]; 4],
+    lightPerspective: [[f32; 4]; 4]
+}
+implement_uniform_block! (ShadowBlock, view, perspective, lightView, lightPerspective);
+
 fn main() {
     // 创建事件循环
     let mut events_loop = glium::glutin::EventsLoop::new();
@@ -61,10 +70,17 @@ fn main() {
     // 创建阴影的视角
     let shadow_camera = camera::Camera::new(&[2.0, 2.0, 0.0], &[-2.0, -2.0, 0.0]);
     // 创建阴影的着色器程序
-    // let program = glium::Program::from_source(&display, vertex_shader: &'a str, fragment_shader: &'a str, None);
+    let shadow_program = glium::Program::from_source(
+        &display, 
+        shade_vs::SHADOW_VS_STR, 
+        shade_fs::SHADOW_FS_STR, 
+        None).unwrap();
 
     let mut closed = false;
     while !closed {
+        // 动画
+        sea.wave(&display);
+
         // 创建frame
         let mut target= display.draw();
         // 清理背景颜色
@@ -77,10 +93,17 @@ fn main() {
             glium::texture::texture2d::Texture2d::empty(&display, 1024, 1024).unwrap();
 
         // 创建一个只有深度缓冲的帧缓冲
-        // let mut shadow_buffer = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, &shadow_color_texture, &shadow_depth_texture).unwrap();
-        // shadow_buffer.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+        let mut shadow_buffer = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, &shadow_color_texture, &shadow_depth_texture).unwrap();
+        shadow_buffer.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
         // 在深度贴图中渲染场景
-        // airplane.draw(&mut shadow_buffer, &shadow_program)
+        let shadow_uniform_block = glium::uniforms::UniformBuffer::new(
+            &display,
+            Block {
+                view: shadow_camera.view,
+                perspective: shadow_camera.perspective,
+            }).unwrap();
+        // airplane.draw(&mut shadow_buffer, &shadow_program, &shadow_uniform_block, &glium::texture::depth_texture2d::DepthTexture2d::empty(&display, 1024, 1024).unwrap());
+        // sea.draw(&mut shadow_buffer, &shadow_program, &shadow_uniform_block, &glium::texture::depth_texture2d::DepthTexture2d::empty(&display, 1024, 1024).unwrap());
 
         // 创建帧缓冲
         let color_texture = glium::texture::srgb_texture2d_multisample::SrgbTexture2dMultisample::empty(&display, 800, 600, 4).unwrap();
@@ -91,15 +114,16 @@ fn main() {
 
         // 创建一个uniform缓冲
         let uniform_block = glium::uniforms::UniformBuffer::new(
-            &display, Block {
+            &display, ShadowBlock {
                 view: view_camera.view,
                 perspective: view_camera.perspective,
+                lightView: shadow_camera.view,
+                lightPerspective: shadow_camera.perspective,
             }).unwrap();
 
         // 绘制场景到新建帧缓冲
-        airplane.draw(&mut frame_buffer, &program, &&&uniform_block);
-        sea.wave(&display);
-        sea.draw(&mut frame_buffer, &program, &uniform_block);
+        airplane.draw(&mut frame_buffer, &program, &uniform_block, &shadow_depth_texture);
+        sea.draw(&mut frame_buffer, &program, &uniform_block, &shadow_depth_texture);
 
         // 将帧缓冲的内容绘制到默认帧缓冲中
         target.blit_from_simple_framebuffer(

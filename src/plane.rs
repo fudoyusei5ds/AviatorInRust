@@ -81,11 +81,11 @@ impl Plane {
         self.engine.set_pmodel(&model);
         self.engine.draw(target, program, uniform, depth);
         self.tail.set_pmodel(&model);
-        self.tail.draw(target, program, uniform,depth);
+        self.tail.draw(target, program, uniform, depth);
         self.propeller.set_pmodel(&model);
-        self.propeller.draw(target, program, uniform,depth);
+        self.propeller.draw(target, program, uniform, depth);
         self.matblade.set_pmodel(&model);
-        self.matblade.draw(target, program, uniform,depth);
+        self.matblade.draw(target, program, uniform, depth);
     }
 
     // 设置位置
@@ -105,30 +105,7 @@ impl Plane {
         ]
     }
     // 设置旋转角度
-    pub fn set_rotate(&mut self, angle: f32, xyz: i32) {
-        self.rotate = if xyz==0 {
-            // 沿x轴旋转
-            [[1.0, 0.0, 0.0, 0.0],
-             [0.0, angle.cos(), angle.sin(), 0.0],
-             [0.0, -angle.sin(), angle.cos(), 0.0],
-             [0.0, 0.0, 0.0, 1.0]]
-        } else if xyz==1 {
-            // 绕y轴旋转
-            [[angle.cos(), 0.0, -angle.sin(), 0.0],
-             [0.0, 1.0, 0.0, 0.0],
-             [angle.sin(), 0.0, angle.cos(), 0.0],
-             [0.0, 0.0, 0.0, 1.0]]
-        } else if xyz==2 {
-            // 绕z轴旋转
-            [[angle.cos(), angle.sin(), 0.0, 0.0],
-             [-angle.sin(), angle.cos(), 0.0, 0.0],
-             [0.0, 0.0, 1.0, 0.0],
-             [0.0, 0.0, 0.0, 1.0]]
-        } else {
-            [[1.0, 0.0, 0.0, 0.0],
-             [0.0, 1.0, 0.0, 0.0],
-             [0.0, 0.0, 1.0, 0.0],
-             [0.0, 0.0, 0.0, 1.0]]
-        };
+    pub fn set_rotate(&mut self, angle: f32) {
+        self.matblade.set_rotate(angle, 0);
     }
 }

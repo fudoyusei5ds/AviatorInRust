@@ -13,7 +13,7 @@ in VS_OUT {
 in float y;
 
 // 在这里设置光线的方向和颜色
-vec3 lightDir = normalize(vec3(2.0, 2.0, 0.0));
+vec3 lightDir = normalize(vec3(1.0, 4.0, 1.0));
 vec3 lightColor = vec3(1.0, 1.0, 1.0);
 
 float ShadowCalculation(vec4 fragPosLightSpace) {
@@ -26,7 +26,8 @@ float ShadowCalculation(vec4 fragPosLightSpace) {
 
     float currentDepth = projCoords.z;
 
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+    float bias = 0.005;
+    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
 
     return shadow;
 }

@@ -181,6 +181,3 @@ let window = glium::glutin::WindowBuilder::new()
 
 接下来, 在场景中添加阴影.  
 
-
-
-### 04. 雾

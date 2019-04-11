@@ -68,7 +68,7 @@ fn main() {
     let view_camera = camera::Camera::new(&[0.0, 1.0, -2.0], &[0.0, -1.0, 2.0]);
 
     // 创建阴影的视角
-    let shadow_camera = camera::Camera::new(&[2.0, 2.0, 0.0], &[-2.0, -2.0, 0.0]);
+    let shadow_camera = camera::Camera::new(&[1.0, 4.0, 0.0], &[-1.0, -4.0, 0.0]);
     // 创建阴影的着色器程序
     let shadow_program = glium::Program::from_source(
         &display, 
@@ -77,9 +77,13 @@ fn main() {
         None).unwrap();
 
     let mut closed = false;
+    let mut index: f32 = 0.0;
     while !closed {
         // 动画
+        index+=0.005;
+        sea.set_rotate(index, 2);
         sea.wave(&display);
+        airplane.set_rotate(index*10.0);
 
         // 创建frame
         let mut target= display.draw();
@@ -110,7 +114,7 @@ fn main() {
         let depth_texture = glium::texture::depth_texture2d_multisample::DepthTexture2dMultisample::empty(&display, 800, 600, 4).unwrap();
         
         let mut frame_buffer = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, &color_texture, &depth_texture).unwrap();
-        frame_buffer.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+        frame_buffer.clear_color_and_depth((0.96, 0.60, 0.43, 1.0), 1.0);
 
         // 创建一个uniform缓冲
         let uniform_block = glium::uniforms::UniformBuffer::new(
